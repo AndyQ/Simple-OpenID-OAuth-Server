@@ -1,0 +1,117 @@
+{% extends "admin/layouts/base.html" %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="{{ url_for('admin.static', filename='editTable.css') }}">
+{% endblock stylesheets %}
+
+{% block title %} Apps {% endblock %}
+
+<!-- Element injected in the BODY element -->
+{% block body_class %} {% endblock body_class %}
+
+{% block content %}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Configure OpenID token</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/admin">Home</a></li>
+                        <li class="breadcrumb-item active">Configure OpenID token</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md">
+                    <!-- TABLE: LATEST ORDERS -->
+                    <div class="card">
+                        <!-- general form elements -->
+                        <div class="card card-primary">
+                            <div class="card-header">
+                                <h3 class="card-title">Supported claims</h3>
+                            </div>
+                            <!-- /.card-header -->
+                            <!-- form start -->
+                            <form id="mainForm" action="openid" method="POST">
+                                <div class="card-body">
+                                    {% for claim in claims %}
+                                    {% if claim[0] in currVals.claims %}
+                                        {% set isOn = "checked" %}
+                                    {% endif %}
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="{{claim[0]}}" name="{{claim[0]}}" {{isOn}}>
+                                        <label for="{{claim[0]}}">{{claim[0]}}</label> ({{claim[1]}})
+                                    </div>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="card-body">
+                                    {% set hiddenStatus = "d-none" %}
+                                    {% if currVals.includeRoles %}
+                                    {% set isOn = "checked" %}
+                                    {% set roleName = currVals.roleClaimName %}
+                                    {% set hiddenStatus = "" %}
+                                    {% endif %}
+
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="includeRoles" name="includeRoles" {{isOn}}>
+                                        <label for="includeRoles">Include roles?</label>
+                                    </div>
+                                    <div id="roleNameContainer" class="form-check {{hiddenStatus}}">
+                                        <label for="roleName">Claim Name for role</label>
+                                        <input type="text" class="form-input" id="roleName" name="roleName" value="{{roleName}}">
+                                    </div>
+                                </div>
+
+                                <!-- /.card-body -->
+                                <div class="card-footer">
+                                    <a href="/admin" class="btn btn-danger">Cancel</a>
+                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                </div>
+                            </form>
+                        </div>
+                        <!-- /.card -->
+                    </div>
+                    <!-- /.card -->
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.row -->
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+
+</div>
+<!-- /.content-wrapper -->
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+
+<script>
+    $(document).ready(function () {
+        $("#includeRoles").on("change", function(event, value){
+            if ( this.checked ) {
+                $("#roleNameContainer").removeClass('d-none');
+            } else {
+                $("#roleNameContainer").addClass('d-none');
+
+            }
+        });
+    });
+</script>
+
+{% endblock javascripts %}

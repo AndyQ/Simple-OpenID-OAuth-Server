@@ -1,0 +1,249 @@
+{% extends "admin/layouts/base.html" %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="{{ url_for('admin.static', filename='editTable.css') }}">
+{% endblock stylesheets %}
+
+{% block title %} Apps {% endblock %}
+
+<!-- Element injected in the BODY element -->
+{% block body_class %} {% endblock body_class %}
+
+{% block content %}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Create or Edit User</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/admin/users">View users</a></li>
+                        <li class="breadcrumb-item active">Create or Edit User</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md">
+                    <!-- TABLE: LATEST ORDERS -->
+                    <div class="card">
+                        <!-- general form elements -->
+                        <div class="card card-primary">
+                            <div class="card-header">
+                                <h3 class="card-title">User details</h3>
+                            </div>
+                            <!-- /.card-header -->
+                            <!-- form start -->
+                            <form id="mainForm" action="edituser" method="POST">
+                                <input type="hidden" name="original_user_id" value="{{ user.user_id }}">
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="app_id">User ID</label>
+                                        <input type="text" class="form-control" id="user_id" name="user_id"
+                                            placeholder="User ID" value="{{user.user_id}}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="appDesc">Given Name</label>
+                                        <input type="text" class="form-control" id="given_name" name="given_name"
+                                            placeholder="Given name" value="{{user.given_name}}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="appDesc">Family Name</label>
+                                        <input type="text" class="form-control" id="family_name" name="family_name"
+                                            placeholder="Family name" value="{{user.family_name}}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="appSecret">Email</label>
+                                        <input type="text" class="form-control" id="email" name="email"
+                                            placeholder="Email address" value="{{user.email}}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="appSecret">Password</label>
+                                        <input type="password" class="form-control" id="password" name="password"
+                                            placeholder="Password" value="{{user.password}}">
+                                        <p class="text-danger">{{error}}</p>
+                                    </div>
+
+                                    <div class="row mx-0">
+                                        <div class="col-6">
+                                            <div class="border mx-1 px-2">
+                                                <div class="table-title">
+                                                    <div class="row">
+                                                        <div class="col-sm-8">
+                                                            <h2>Application roles</b></h2>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <select title="application  " name="application" id="application" class="form-control" onClick="">
+                                                    <option value="">Select Application</option>
+                                                    {% for app in appNames %}
+                                                    <option value="{{app}}">{{app}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                                <table id="appRolesTable" class="table table-bordered">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Role</th>
+                                                            <th>Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 border mr-0">
+                                            <div class=" mx-1 px-2">
+                                                <div class="table-title">
+                                                    <div class="row">
+                                                        <div class="col-sm-8">
+                                                            <h2>Selected Roles</b></h2>
+                                                    </div>
+                                                </div>
+                                                <table id="rolesTable" class="table table-bordered">
+                                                    <thead>
+                                                        <tr>
+                                                            <th width="50%">Application</th>
+                                                            <th width="25%">Role</th>
+                                                            <th width="25%">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for app_id, roles in user.permissions.items() %}
+                                                        {% for role in roles %}
+                                                        <tr>
+                                                            <td>{{app_id}}</td>
+                                                            <td>{{role}}</td>
+                                                            <td>
+                                                                <a class="delete" title="Delete" data-toggle="tooltip"><i
+                                                                        class="fa fa-minus"></i></a>
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                        {% endfor %}                                                    </tbody>
+                                                </table>
+                                            </div>           
+                                        </div>                        
+                                     </div>
+                                </div>
+                                <!-- /.card-body -->
+                                <div class="card-footer">
+                                    <a href="users" class="btn btn-danger">Cancel</a>
+                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                </div>
+                            </form>
+                        </div>
+                        <!-- /.card -->
+
+
+                    </div>
+                    <!-- /.col -->
+                </div>
+                <!-- /.row -->
+            </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+
+</div>
+<!-- /.content-wrapper -->
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+
+<script>
+    $(document).ready(function () {
+        $("#application").on("change", function(event, value){
+
+            // Clear list of roles
+            var tableBody = $('#appRolesTable tbody')
+            tableBody.empty();
+
+            if ( this.selectedIndex > 0 ) {
+                // Get list of roles for application
+                var app_id = $( "#application option:selected" ).text();
+                $.ajax({ url: 'appRoles/' + app_id,
+                    type: "GET",
+                    dataType: "json",
+                    success: function (data) {
+
+                        data.forEach(item => {
+                            var row = '<tr>' +
+                                '<td>'+item+'</td>' +
+                                '<td><a class="add" title="Add" data-toggle="tooltip"><i class="fa fa-plus"></i></a>' +
+                                '</td></tr>';
+                                tableBody.append(row);
+                        });
+
+                    }
+                });
+            }
+        });
+        $('#mainForm').submit(function () {
+
+            var permissions = "";
+            $("#rolesTable tbody tr").each(function() {
+                var app_id = $(this).find('td:first-child').text();
+                var role = $(this).find('td:nth-child(2)').text();
+
+                if ( permissions != "" ) {
+                    permissions += ",";
+                }
+                permissions += app_id + ":" + role
+            });
+
+            $(this).append('<input type="hidden" name="roles" value="' + permissions + '" /> ');
+
+        });
+
+
+        // Append table with add row form on add new button click
+        $(document).on("click", ".add", function () {
+
+            var app_id = $( "#application option:selected" ).text();
+            var role = $(this).parents("tr").find('td:first-child').text();
+
+            if ( !role_already_added( app_id, role ) ) {
+                var tableBody = $('#rolesTable tbody')
+
+                var row = `<tr><td>${app_id}</td><td>${role}</td>` +
+                    '<td><a class="delete" title="Delete" data-toggle="tooltip"><i class="fa fa-minus"></i></a>' +
+                    '</td></tr>';
+
+                tableBody.append(row);
+            }
+        });
+
+
+        function role_already_added( app_id, role ) {
+            var found = false;
+            $("#rolesTable tbody tr").each(function() {
+                if ( $(this).find('td:first-child').text() == app_id && 
+                     $(this).find('td:nth-child(2)').text() == role ) {
+
+                    found = true;
+                }
+            });
+            return found;
+        }
+
+
+        // Delete row on delete button click
+        $(document).on("click", ".delete", function () {
+            $(this).parents("tr").remove();
+        });
+    });
+</script>
+
+{% endblock javascripts %}
