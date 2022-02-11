@@ -12,4 +12,4 @@ Features:
 
 # Credits
 This is based off https://github.com/michaelawyu/auth-server-sample
-Admin interface uses the AdminLTE Dashboar template  - https://adminlte.io
+Admin interface uses the AdminLTE Dashboard template  - https://adminlte.io
