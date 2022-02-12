@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sign in</title>
+</head>
+<body>
+    <h3> Auth details returned from OAuth server: </h3>
+    Auth Details:
+    <pre>
+{{auth_details}}
+    </pre>
+
+    ID_TOKEN:<br>
+    Header:
+    <pre>
+{{jwt_header}}
+    </pre>
+    Body:
+    <pre>
+{{ jwt_claims }}
+    </pre>
+    
+
+    <a href="..">Back to home</a>
+</body>
+</html>
