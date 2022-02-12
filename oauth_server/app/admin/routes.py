@@ -2,7 +2,7 @@ import os
 import json
 
 from flask   import redirect, render_template, request, url_for, jsonify
-from app import app, app_management, user_management
+from app import app, app_management, user_management, openid_management
 from . import admin
 
 
@@ -79,15 +79,18 @@ def viewUsers():
 @admin.route('/edituser', methods=['GET', 'POST'])
 def editUser():
 
+    openIDConfig = openid_management.loadConfig()
     if request.method == "GET":
         user_id = request.args.get('user_id')
 
         user = user_management.getUser( user_id )
         apps = app_management.getListOfApps()
+
         appNames = [app["app_id"] for app in apps]
 
         context = { "user" : user,
-                    "appNames" : appNames
+                    "appNames" : appNames,
+                    "availableClaims" : openIDConfig["availableClaims"]
         }
 
         return render_template('admin/editCreateUser.html', **context)
@@ -108,11 +111,16 @@ def editUser():
         elif new_user == True:
             context = { "user" : user, "error": "You must set a password"}
             return render_template('admin/editCreateUser.html', **context)
-
         user["user_id"] = request.form.get('user_id')
-        user["given_name"] = request.form.get('given_name')
-        user["family_name"] = request.form.get('family_name')
-        user["email"] = request.form.get('email')
+
+        # now add up the available claims
+        for claim in openIDConfig["availableClaims"]:
+            if claim["name"] in request.form:
+                user[claim["name"]] = request.form.get(claim["name"])
+
+        # user["given_name"] = request.form.get('given_name')
+        # user["family_name"] = request.form.get('family_name')
+        # user["email"] = request.form.get('email')
 
         # handle roles - its a string of , separated app_ids:role
         roles = request.form.get('roles').split(",")
@@ -144,56 +152,29 @@ def deleteUser():
 @admin.route('/openid', methods=['GET', 'POST'])
 def openid():
 
-        # get list of claims
-        claims = [
-            ["sub","identifier of the user"],
-            ["name","full name"],
-            ["given_name","given name"],
-            ["family_name","family name"],
-            # ["middle_name","middle name"],
-            # ["nickname","nickname"],
-            # ["preferred_username","name by which the user wishes to be referred to"],
-            # ["profile","URL of a profile page"],
-            # ["picture","URL of a profile picture"],
-            # ["website","URL of a web/blog site"],
-            ["email","email address"],
-            # ["email_verified","whether the email has been verified"],
-            # ["gender","gender"],
-            # ["birthdate","birthday in YYYY-MM-DD format"],
-            # ["zoneinfo","timezone; e.g. Europe/Paris"],
-            # ["locale","locale; e.g. en-US"],
-            # ["phone_number","phone number"],
-            # ["phone_number_verified","whether the phone number has been verified"],
-            # ["address","postal address; the format is defined in “5.1.1. Address Claim”"],
-            # ["updated_at","last time the user's information was updated at"],
-        ]
+    openIDDetails = openid_management.loadConfig()
 
-        if request.method == "POST":
-            openIDDetails= {}
-            openIDClaims = []
-            for claim in claims:
-                val = request.form.get(claim[0])
-                if val != None:
-                    openIDClaims.append( claim[0] )
+    if request.method == "POST":
+        openIDClaims = []
+        for claim in claims:
+            val = request.form.get(claim[0])
+            if val != None:
+                openIDClaims.append( claim[0] )
 
-            openIDDetails["claims"] = openIDClaims
-            if request.form.get( "includeRoles" ):
-                roleName = request.form.get( "roleName", "role" )
+        openIDDetails["claims"] = openIDClaims
+        if request.form.get( "includeRoles" ):
+            roleName = request.form.get( "roleName", "role" )
 
-                openIDDetails["includeRoles"] = True
-                openIDDetails["roleClaimName"] = roleName
-            else:
-                openIDDetails["includeRoles"] = False
-
-            # save openID Claim Details
-            openidFile = os.path.join(app.instance_path, 'data/openid.json')
-            with open( openidFile, "w" ) as f:
-                json.dump( openIDDetails, f, indent=4 )
+            openIDDetails["includeRoles"] = True
+            openIDDetails["roleClaimName"] = roleName
         else:
-            openidFile = os.path.join(app.instance_path, 'data/openid.json')
-            with open( openidFile, "r" ) as f:
-                openIDDetails = json.load(f)
+            openIDDetails["includeRoles"] = False
 
-        context = { "currVals": openIDDetails, 
-                    "claims" : claims}
-        return render_template( 'admin/openid.html', **context)
+        # save openID Claim Details
+        openid_management.saveConfig( openIDDetails )
+
+    context = { "availableClaims": openIDDetails["availableClaims"], 
+                "claims" : openIDDetails["claims"],
+                "includeRoles" : openIDDetails["includeRoles"],
+                "roleClaimName" : openIDDetails["roleClaimName"] }
+    return render_template( 'admin/openid.html', **context)

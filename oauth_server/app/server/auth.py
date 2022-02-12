@@ -14,6 +14,7 @@ from cryptography.hazmat.primitives import serialization
 
 from app import app
 from app import app_management
+from app import openid_management
 
 
 # KEY = Fernet.generate_key()
@@ -59,7 +60,8 @@ def verify_client_info(client_id):
     return False
 
 
-def verify_redirect_uri(redirect_uri):
+def verify_redirect_uri(client_id, redirect_uri):
+    app = app_management.getApp( client_id )
     if app != None:
         if redirect_uri == app["callback"]:
             return True
@@ -121,6 +123,11 @@ def long_to_base64(n):
 
 
 def generate_jwt_token(client_id, user, scopes):
+
+    # Bring in OpenID Settings
+    openIDConfig = openid_management.loadConfig()
+
+    # standard claims
     payload = {
         "iss": ISSUER,
         "exp": time.time() + JWT_LIFE_SPAN,
@@ -129,14 +136,23 @@ def generate_jwt_token(client_id, user, scopes):
         "iat": time.time()
     }
 
-    if scopes:
-        for s in scopes.split( " " ):
-            if s in user:
-                payload[s] = user[s]
-            elif s == "name":
-                payload["given_name"] = user["given_name"]
-                payload["family_name"] = user["family_name"]
-     
+    for claim in openIDConfig["claims"]:
+        claimName = claim
+        # handle special cases first
+        if claimName == "name":
+            payload[claimName] = user["given_name"] + " " + user["family_name"]
+        elif claimName == "email_verified":
+            payload[claimName] = False
+        elif claimName == "phone_number_verified":
+            payload[claimName] = False
+        elif claimName == "updated_at":
+            payload[claimName] = user["name"]
+        else:
+            if user.get( claimName, "" ) != "":
+                payload[claimName] = user[claimName]
+
+    if openIDConfig["includeRoles"] and openIDConfig.get("roleClaimName", "") != "":
+        payload[openIDConfig["roleClaimName"]] = user.get("permissions", {}).get(client_id, [])
 
     access_token = jwt.encode(payload, private_key, algorithm='RS256', headers={
                               'kid': getPublicKeyKID()})

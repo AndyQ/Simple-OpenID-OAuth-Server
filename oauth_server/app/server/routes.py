@@ -3,6 +3,8 @@ from flask import Flask, redirect, render_template, request, jsonify, flash
 from urllib.parse import urlencode
 
 from app import app
+from app import user_management
+from app import openid_management
 from . import server
 
 from .auth import (authenticate_client,
@@ -16,7 +18,7 @@ from .auth import (authenticate_client,
                   get_details_for_access_token, getJWK, 
                   JWT_LIFE_SPAN)
 
-from .users import get_user_details, authenticate_user_credentials
+from .users import authenticate_user_credentials
 
 
 
@@ -39,13 +41,13 @@ def auth():
             "error": "invalid_client_id"
         })
 
-    if not verify_redirect_uri(redirect_url):
+    if not verify_redirect_uri(client_id, redirect_url):
         flash("Invalid redirect_url")
         return jsonify({
             "error": "invalid_redirect_uri"
         })
 
-    return render_template('AC_grant_access.html',
+    return render_template('grant_access.html',
                            client_id=client_id,
                            redirect_url=redirect_url,
                            scope=scope)
@@ -72,28 +74,28 @@ def signin():
 
     if None in [username, password, client_id, redirect_url]:
         flash("invalid_request - missing username, password, client_id or redirect_url")
-        return render_template('AC_grant_access.html',
+        return render_template('grant_access.html',
                            client_id=client_id,
                            redirect_url=redirect_url,
                            username=username)
 
     if not verify_client_info(client_id):
         flash("Invalid client_id")
-        return render_template('AC_grant_access.html',
+        return render_template('grant_access.html',
                     client_id=client_id,
                     redirect_url=redirect_url,
                     username=username)
 
-    if not verify_redirect_uri(redirect_url):
+    if not verify_redirect_uri(client_id, redirect_url):
         flash("Invalid redirect_url")
-        return render_template('AC_grant_access.html',
+        return render_template('grant_access.html',
                     client_id=client_id,
                     redirect_url=redirect_url,
                     username=username)
 
     if not authenticate_user_credentials(username, password):
         flash("Invalid username or password")
-        return render_template('AC_grant_access.html',
+        return render_template('grant_access.html',
                     client_id=client_id,
                     redirect_url=redirect_url,
                     username=username)
@@ -140,7 +142,7 @@ def exchange_for_token():
     # Lookup user details
     user_id = auth_details['username']
     scope = auth_details['scope']
-    user_details = get_user_details(user_id)
+    user_details = user_management.getUser(user_id)
     (access_token, refresh_token) = generate_access_and_refresh_tokens()
 
     id_token = None
@@ -153,7 +155,7 @@ def exchange_for_token():
         "refresh_token": refresh_token,
         "token_type": "Bearer",
         "expires_in": JWT_LIFE_SPAN,
-        'ba_refresh_expires_in': 2592000
+        'refresh_expires_in': 2592000
     }
     if "openid" in scope:
         id_token = generate_jwt_token(client_id, user_details, scope)
@@ -188,8 +190,10 @@ def introspect():
     user_id = tokenDetails["user_id"]
     client_id = tokenDetails["client_id"]
     scope = tokenDetails["scope"]
+    user = user_management.getUser(user_id)
+    openIDConfig = openid_management.loadConfig()
 
-    return jsonify({
+    resp = {
             'sub': user_id, 
             'aud': client_id, 
             'scope': scope,
@@ -197,8 +201,12 @@ def introspect():
             'scope': scope,
             'iairgroup.attributes': {}, 
             'client_id': client_id 
+    }
+
+    if openIDConfig.get("includeRoles", False) == True and openIDConfig.get("roleClaimName", "") != "":
+        resp[openIDConfig["roleClaimName"]] = user.get("permissions", {}).get(client_id, [])
+    return jsonify(resp)
             #'iairgroup.roles': ['IAGStore.Admin_BADEV', 'IAGStore.Admin_BAPOC', 'IAGStore.Admin_IAGStore', 'IAGStore.Develop_IAGStore']
-    })
 
 @server.route('/certs', methods=['GET'])
 def certs():

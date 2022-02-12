@@ -1,11 +1,8 @@
 from app import app
 from app import user_management
 
-def get_user_details( user_id ):
-    return user_management.get_user_details( user_id )
-
 def authenticate_user_credentials(user_id, password):
-    user = user_management.get_user_details( user_id )
+    user = user_management.getUser( user_id )
     if user is None:
         return False
     

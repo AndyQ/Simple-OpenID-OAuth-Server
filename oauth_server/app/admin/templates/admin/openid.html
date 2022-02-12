@@ -46,22 +46,22 @@
                             <!-- form start -->
                             <form id="mainForm" action="openid" method="POST">
                                 <div class="card-body">
-                                    {% for claim in claims %}
-                                    {% if claim[0] in currVals.claims %}
+                                    {% for claim in availableClaims %}
+                                    {% if claim.name in claims %}
                                         {% set isOn = "checked" %}
                                     {% endif %}
                                     <div class="form-check">
-                                        <input type="checkbox" class="form-check-input" id="{{claim[0]}}" name="{{claim[0]}}" {{isOn}}>
-                                        <label for="{{claim[0]}}">{{claim[0]}}</label> ({{claim[1]}})
+                                        <input type="checkbox" class="form-check-input" id="{{claim.name}}" name="{{claim.name}}" {{isOn}}>
+                                        <label for="{{claim[0]}}">{{claim.name}}</label> ({{claim.description}})
                                     </div>
                                     {% endfor %}
                                 </div>
 
                                 <div class="card-body">
                                     {% set hiddenStatus = "d-none" %}
-                                    {% if currVals.includeRoles %}
+                                    {% if claims.includeRoles %}
                                     {% set isOn = "checked" %}
-                                    {% set roleName = currVals.roleClaimName %}
+                                    {% set roleName = claims.roleClaimName %}
                                     {% set hiddenStatus = "" %}
                                     {% endif %}
 
