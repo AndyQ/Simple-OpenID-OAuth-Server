@@ -1,0 +1,30 @@
+{% extends "client/layouts/base.html" %}
+
+{% block content %}
+
+<div class="container px-4 py-5 ">
+    <div class="pb-2 border-bottom clearfix">
+        <h2 class="float-start">Available Users</h2>
+        <a class="btn btn-primary float-end " href="{{ url_for('client.main') }}">Back to home</a>
+    </div>
+    <div class="row g-4 py-5 row-cols-1 row-cols-lg-2">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                        </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user['username'] }}</td>
+                    <td>{{ user['email'] }}</td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock content %}

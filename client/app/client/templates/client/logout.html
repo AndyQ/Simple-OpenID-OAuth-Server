@@ -1,0 +1,27 @@
+{% extends "client/layouts/base.html" %}
+
+{% block content %}
+
+<div class="px-4 py-5 my-5 text-center">
+    <img class="d-block mx-auto mb-4" src="{{ url_for('client.static', filename='images/logo.svg') }}" alt="" width="72" height="57">
+    <h1 class="display-5 fw-bold">Sample OAuth Client app</h1>
+    <div class="col-lg-6 mx-auto">
+      <p class="lead mb-4">You have been logged out.</p>
+      <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+        <form action="{{url_for('client.login')}}" method="post">
+            <button type="submit" class="btn btn-primary btn-lg px-4 gap-3">Log in</button>
+        </form>
+      </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <ul class=flashes>
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+</div>
+{% endblock content %}

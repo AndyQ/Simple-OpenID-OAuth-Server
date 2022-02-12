@@ -1,0 +1,42 @@
+{% extends "client/layouts/base.html" %}
+
+{% block content %}
+
+<div class="container px-4 py-5 " >
+    <div class="pb-2 border-bottom clearfix">
+        <h2 class="float-start">View authentication details</h2>    
+        <a class="btn btn-primary float-end " href="{{ url_for('client.main') }}">Back to home</a>
+    </div>
+    <div class="row g-4 py-5 row-cols-1 row-cols-lg-2">
+        <div class="feature col">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">
+                        Auth details returned from OAuth server
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Auth Details</h5>
+                        <pre>{{auth_details}}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="feature col">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">
+                        ID_TOKEN
+                    </div>
+                    <div class="card-body">
+                        
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item"><h5 class="card-title">Header</h5><pre>{{jwt_header}}</pre></li>
+                            <li class="list-group-item"><h5 class="card-title">Body</h5><pre>{{jwt_claims}}</pre></li>
+                          </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
