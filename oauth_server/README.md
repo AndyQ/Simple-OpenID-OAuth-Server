@@ -37,8 +37,6 @@ Then install the dependancies<br>
 To start the server running, simply run:
 `python run.py`
 
-This will start the server running on Port 8081
-
-Then, run the appstore in local dev mode and it should by default be configured to talk to this OAuth server.
+This will start the server running on Port 8001
 
 
