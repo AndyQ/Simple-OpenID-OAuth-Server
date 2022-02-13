@@ -22,7 +22,7 @@ app = Flask(__name__)
 def before_request():
     # Redirects user to the login page if access token is not present
     if request.endpoint not in ['client.login', 'client.callback', 'client.logout']:
-        access_token = request.cookies.get('access_token')
+        access_token = utils.get_cookie(request,'access_token' )
         if access_token:
             pass
         else:
@@ -35,9 +35,14 @@ def main():
 
 @client.route('/viewAuthDetails')
 def viewAuthDetails():
-    auth_details = request.cookies.get('auth_details')
-    id_token = request.cookies.get('id_token')
-    (header, claims) = utils.extractJWT( id_token )
+    auth_details = utils.get_cookie(request,'auth_details' )
+    id_token = utils.get_cookie(request,'id_token' )
+
+    try:
+        (header, claims) = utils.extractJWT( id_token )
+    except Exception as e:
+        flash( "Error: " + str(e) )
+        return redirect(url_for('client.logout'))
 
     # Pretty print json
     auth_details = json.dumps(json.loads(auth_details), indent=4, sort_keys=True)
@@ -49,7 +54,7 @@ def viewAuthDetails():
 @client.route('/getUsers')
 def getUsers():
     # Retrieves a list of users
-    access_token = request.cookies.get('access_token')
+    access_token = utils.get_cookie(request,'access_token' )
 
     r = requests.get(RES_PATH, headers={
         'Authorization': 'Bearer {}'.format(access_token)
@@ -71,11 +76,21 @@ def getUsers():
 
 @client.route('/login', methods=['GET', 'POST'])
 def login():
-
     
     if request.method == "POST":
-        auth_url = f"{AUTH_PATH}?response_type=code&client_id={CLIENT_ID}&redirect_url={REDIRECT_URL}&scope=openid"
-        return redirect(auth_url)
+
+        # generate state and nonce values
+        state = utils.generate_state()
+        nonce = utils.generate_nonce()
+
+        # Store these in the session for later use
+        auth_url = f"{AUTH_PATH}?response_type=code&client_id={CLIENT_ID}&redirect_url={REDIRECT_URL}&scope=openid&state={state}&nonce={nonce}"
+        response = redirect(auth_url)
+
+        utils.save_cookie(response, 'state', state)
+        utils.save_cookie(response, 'nonce', nonce)
+
+        return  response
 
     # Presents the login page
     return render_template('client/login.html' )
@@ -90,6 +105,8 @@ def logout():
     response.set_cookie('access_token', '', expires=0)
     response.set_cookie('refresh_token', '', expires=0)
     response.set_cookie('id_token', '', expires=0)
+    response.set_cookie('state', expires=0)
+    response.set_cookie('nonce', expires=0)
 
     return response
 
@@ -98,6 +115,12 @@ def logout():
 def callback():
     # Accepts the authorization code and exchanges it for access token
     authorization_code = request.args.get('code')
+    state = request.args.get('state')
+
+    cookie_state = utils.get_cookie(request, 'state')
+    if cookie_state != "" and cookie_state != state:
+        flash('Invalid state parameter')
+        return redirect(url_for('client.logout'))
 
     if not authorization_code:
         return json.dumps({
@@ -125,12 +148,31 @@ def callback():
     refresh_token = auth.get('refresh_token')
     id_token = auth.get('id_token')
 
+    #  Validate the id_token 
+    try:
+        (header, claims) = utils.extractJWT( id_token )
+    except Exception as e:
+        flash( "Error: " + str(e) )
+        return redirect(url_for('client.logout'))
+
+    # Ensure that the nonce value is the same (if originally set)
+    nonce = claims.get('nonce', "")
+    cookie_nonce = utils.get_cookie(request, 'nonce')
+    if cookie_nonce != "" and cookie_nonce != nonce:
+        flash('Invalid nonce parameter')
+        return redirect(url_for('client.logout'))
+
     response = make_response(redirect(url_for('client.main')))
 
     # Don't do this - ideally these should be stored in a server side session
     # or encrypted BUT as this is a test app - you may want to see client side
-    response.set_cookie('auth_details', auth_details)
-    response.set_cookie('access_token', access_token)
-    response.set_cookie('refresh_token', refresh_token)
-    response.set_cookie('id_token', id_token)
+    utils.save_cookie(response, 'auth_details', auth_details)
+    utils.save_cookie(response, 'access_token', access_token)
+    utils.save_cookie(response, 'refresh_token', refresh_token)
+    utils.save_cookie(response, 'id_token', id_token)
+
+    # Remove state and nonce cookies as we are done with them
+    response.set_cookie('state', expires=0)
+    response.set_cookie('nonce', expires=0)
+
     return response

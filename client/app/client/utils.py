@@ -1,12 +1,16 @@
 import jwt
+import os
 
-with open('../public.pem', 'rb') as f:
-  public_key = f.read()
+from app import app
+
+public_key_pem = os.path.join(app.instance_path, 'public.pem')
+with open(public_key_pem, 'rb') as file:
+    public_key = file.read()
+
 ISSUER = 'sample-auth-server'
 AUDIENCE = "sample-client-id"
 
 def extractJWT( token ):
-    data = {}
 
     claims = jwt.decode(token, public_key,
                             issuer = ISSUER,
@@ -16,20 +20,24 @@ def extractJWT( token ):
     header = jwt.get_unverified_header(token)
 
     return ( header, claims )
-    # print( decoded_token )
-    # claims = jwt.get_unverified_header(token)
-    print( claims )
-    firstName = claims["given_name"]
-    lastName = claims["family_name"]
-    roles = claims["iairgroup.roles"]
-    validRoles = "#".join([role[9:] for role in roles if role.startswith( "IAGStore." )])
 
-    data["userId"] = claims["sub"]
-    data["role"] = validRoles
-    data["firstName"] = firstName
-    data["lastName"] = lastName
 
-    print( f"claims - {claims}" )
-    print( f"Valid roles - {validRoles}" )
-    print( f"roles - {roles}" )
-    return claims
+def save_cookie( response, name, value ):
+    # TODO: Encrypt cookie value
+    response.set_cookie(name, value)
+
+def get_cookie( request, name ):
+    # TODO: Decrypt cookie value
+    value = request.cookies.get(name)
+    return value
+
+
+def generate_state():
+    import random
+    import string
+    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(32))
+
+def generate_nonce():
+    import random
+    import string
+    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(32))

@@ -122,7 +122,7 @@ def long_to_base64(n):
     return s.decode("ascii")
 
 
-def generate_jwt_token(client_id, user, scopes):
+def generate_jwt_token(client_id, user, scopes, nonce):
 
     # Bring in OpenID Settings
     openIDConfig = openid_management.loadConfig()
@@ -135,6 +135,9 @@ def generate_jwt_token(client_id, user, scopes):
         "sub": user["email"],
         "iat": time.time()
     }
+
+    if  nonce != "":
+        payload["nonce"] = nonce
 
     for claim in openIDConfig["claims"]:
         claimName = claim
@@ -160,7 +163,7 @@ def generate_jwt_token(client_id, user, scopes):
     return access_token
 
 
-def generate_authorization_code(client_id, username, redirect_url, scope):
+def generate_authorization_code(client_id, username, redirect_url, scope, nonce):
     # f = Fernet(KEY)
     authorization_code = f.encrypt(json.dumps({
         "client_id": client_id,
@@ -180,6 +183,7 @@ def generate_authorization_code(client_id, username, redirect_url, scope):
         "redirect_url": redirect_url,
         "exp": expiration_date,
         "scope": scope,
+        "nonce": nonce,
     }
 
     return authorization_code

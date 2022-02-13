@@ -28,6 +28,8 @@ def auth():
     client_id = request.args.get('client_id')
     redirect_url = request.args.get( 'redirect_url', request.args.get('redirect_uri'))
     scope = request.args.get('scope', "")
+    state = request.args.get('state', "")
+    nonce = request.args.get('nonce', "")
 
     if None in [client_id, redirect_url]:
         flash("Missing client_id or redirect_url")
@@ -50,14 +52,17 @@ def auth():
     return render_template('grant_access.html',
                            client_id=client_id,
                            redirect_url=redirect_url,
-                           scope=scope)
+                           scope=scope,
+                           state=state,
+                           nonce=nonce)
 
 
-def process_redirect_url(redirect_url, authorization_code):
+def process_redirect_url(redirect_url, authorization_code, state):
     # Prepare the redirect URL
     url_parts = list(urlparse.urlparse(redirect_url))
     queries = dict(urlparse.parse_qsl(url_parts[4]))
     queries.update({"code": authorization_code})
+    queries.update({"state": state})
     url_parts[4] = urlencode(queries)
     url = urlparse.urlunparse(url_parts)
     return url
@@ -71,6 +76,8 @@ def signin():
     client_id = request.form.get('client_id')
     redirect_url = request.form.get('redirect_url')
     scope = request.form.get('scope', "")
+    state = request.form.get('state', "")
+    nonce = request.form.get('nonce', "")
 
     if None in [username, password, client_id, redirect_url]:
         flash("invalid_request - missing username, password, client_id or redirect_url")
@@ -100,9 +107,9 @@ def signin():
                     redirect_url=redirect_url,
                     username=username)
 
-    authorization_code = generate_authorization_code(client_id, username, redirect_url, scope)
+    authorization_code = generate_authorization_code(client_id, username, redirect_url, scope, nonce)
 
-    url = process_redirect_url(redirect_url, authorization_code)
+    url = process_redirect_url(redirect_url, authorization_code, state)
 
     return redirect(url, code=303)
 
@@ -142,6 +149,7 @@ def exchange_for_token():
     # Lookup user details
     user_id = auth_details['username']
     scope = auth_details['scope']
+    nonce = auth_details['nonce']
     user_details = user_management.getUser(user_id)
     (access_token, refresh_token) = generate_access_and_refresh_tokens()
 
@@ -158,7 +166,7 @@ def exchange_for_token():
         'refresh_expires_in': 2592000
     }
     if "openid" in scope:
-        id_token = generate_jwt_token(client_id, user_details, scope)
+        id_token = generate_jwt_token(client_id, user_details, scope, nonce)
         ret["id_token"] = id_token
 
     return jsonify(ret)
