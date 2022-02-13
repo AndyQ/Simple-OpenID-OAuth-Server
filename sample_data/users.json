@@ -1,0 +1,77 @@
+[
+    {
+        "user_id": "user3",
+        "password_salt": "LdYz6TZrewUgPHqPNISeuw==",
+        "password_hash": "cEAlGb9AEPeFs4AYdyGiZ4g92f8uJQ7bnwMz7q3ZM44=",
+        "given_name": "Test",
+        "family_name": "User2",
+        "email": "test3@example.com",
+        "permissions": {
+            "sample-client-id": [
+                "User"
+            ]
+        },
+        "middle_names": "",
+        "nickname": "",
+        "profile": "",
+        "picture": "",
+        "website": "",
+        "gender": "",
+        "birthdate": "",
+        "zoneinfo": "",
+        "locale": "",
+        "phone_number": "",
+        "phone_number_verified": "",
+        "address": ""
+    },
+    {
+        "user_id": "user1",
+        "password_salt": "LdYz6TZrewUgPHqPNISeuw==",
+        "password_hash": "cEAlGb9AEPeFs4AYdyGiZ4g92f8uJQ7bnwMz7q3ZM44=",
+        "given_name": "Test",
+        "family_name": "User1",
+        "email": "test1@example.com",
+        "permissions": {
+            "sample-client-id": [
+                "Admin"
+            ]
+        },
+        "middle_names": "The",
+        "nickname": "",
+        "profile": "",
+        "picture": "",
+        "website": "",
+        "gender": "",
+        "birthdate": "",
+        "zoneinfo": "",
+        "locale": "",
+        "phone_number": "",
+        "phone_number_verified": "",
+        "address": ""
+    },
+    {
+        "user_id": "user2",
+        "given_name": "Test",
+        "family_name": "User2",
+        "email": "test2@example.com",
+        "password_salt": "L+F3nGHjm4GA03sbOEtXEg==",
+        "password_hash": "lVFpTQ/W9fxICOY5HgJnruVmuNkiZgqZjuS6r2q/C4g=",
+        "permissions": {
+            "sample-client-id": [
+                "Developer"
+            ]
+        },
+        "middle_names": "",
+        "nickname": "",
+        "profile": "",
+        "picture": "",
+        "website": "",
+        "gender": "",
+        "birthdate": "",
+        "zoneinfo": "",
+        "locale": "",
+        "phone_number": "",
+        "phone_number_verified": "",
+        "address": ""
+    }
+]

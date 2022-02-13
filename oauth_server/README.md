@@ -6,6 +6,12 @@ A very simple test OAuth server
 
 Note - it is assumed that you are using Python 3.8 (tested with Python 3.8.12).
 
+Run the `setup_data.sh` script which will perform the following:
+- Create the instance folders
+- Generate the public and private key pair into the oauth_server instance folder
+- Copy the public key to the client and resource_server instance folders
+- Copy the initial sample data to the oauth_server instance folder
+
 The instance folder contains:
 - a public and private RSA key pair that is used to sign the JWT tokens used when OpenID is specificied as a scope (see later).
 - A data folder containing a list of user details (users.json) and a list of registered applications (apps.json).

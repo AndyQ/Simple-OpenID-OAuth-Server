@@ -16,3 +16,7 @@ openssl rsa -in oauth_server/instance/private.pem -pubout -outform PEM -out oaut
 # copy public key to client and resource server
 cp oauth_server/instance/public.pem client/instance/public.pem
 cp oauth_server/instance/public.pem resource_server/instance/public.pem
+
+# Copy sample data to oauth server
+mkdir oauth_server/instance/data
+cp sample_data/* oauth_server/instance/data

@@ -1,0 +1,32 @@
+{ 
+    "availableClaims": [
+        {"name" : "user_id", "description" : "identifier of the user"},
+        {"name" : "name", "description" : "full name"},
+        {"name" : "given_name", "displayName" : "Given name", "description" : "given name"},
+        {"name" : "middle_names", "displayName" : "Middle names", "description" : "middle name"},
+        {"name" : "family_name", "displayName" : "Family name", "description" : "family name"},
+        {"name" : "nickname", "displayName" : "Nickname", "description" : "nickname"},
+        {"name" : "profile", "displayName" : "Profile page URL", "description" : "URL of a profile page"},
+        {"name" : "picture", "displayName" : "Profile Picture URL", "description" : "URL of a profile picture"},
+        {"name" : "website", "displayName" : "Website URL", "description" : "URL of a web/blog site"},
+        {"name" : "email", "displayName" : "Email address", "description" : "email address"},
+        {"name" : "email_verified", "description" : "email address hqs been verified"},
+        {"name" : "gender", "displayName" : "Gender", "description" : "gender"},
+        {"name" : "birthdate", "displayName" : "Birth date", "description" : "birthday in YYYY-MM-DD format"},
+        {"name" : "zoneinfo", "displayName" : "Timezone ", "description" : "timezone; e.g. Europe/Paris"},
+        {"name" : "locale", "displayName" : "Locale", "description" : "locale; e.g. en-US"},
+        {"name" : "phone_number", "displayName" : "Phone number", "description" : "phone number"},
+        {"name" : "phone_number_verified", "displayName" : "phone_number_verified", "description" : "whether the phone number has been verified"},
+        {"name" : "address", "displayName" : "address", "description" : "postal address; the format is defined in “5.1.1. Address Claim”"},
+        {"name" : "updated_at", "description" : "last time the user's information was updated at"}
+    ],
+    "claims" : [
+        "userid",
+        "name",
+        "given_name",
+        "family_name",
+        "email"
+    ],
+    "includeRoles": true,
+    "roleClaimName": "roles"
+}

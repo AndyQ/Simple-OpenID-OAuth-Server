@@ -1,0 +1,13 @@
+[
+    {
+        "app_id": "sample-client-id",
+        "description": "Sample Client",
+        "secret": "sample-client-secret",
+        "callback": "http://localhost:8000/callback",
+        "roles": [
+            "Admin",
+            "Developer",
+            "User"
+        ]
+    }
+]
