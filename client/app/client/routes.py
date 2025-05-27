@@ -6,9 +6,9 @@ from flask import (Flask, make_response, render_template, redirect, request,
 
 from . import client
 from . import utils
+import config
 
-AUTH_PATH = 'http://localhost:8001/auth'
-TOKEN_PATH = 'http://localhost:8001/token'
+
 REDIRECT_URL = 'http://localhost:8000/callback'
 RES_PATH = 'http://localhost:8002/users'
 
@@ -84,7 +84,7 @@ def login():
         nonce = utils.generate_nonce()
 
         # Store these in the session for later use
-        auth_url = f"{AUTH_PATH}?response_type=code&client_id={CLIENT_ID}&redirect_url={REDIRECT_URL}&scope=openid&state={state}&nonce={nonce}"
+        auth_url = f"{app.config['AUTH_PATH_URL']}?response_type=code&client_id={CLIENT_ID}&redirect_url={REDIRECT_URL}&scope=openid&state={state}&nonce={nonce}"
         response = redirect(auth_url)
 
         utils.save_cookie(response, 'state', state)
@@ -127,7 +127,7 @@ def callback():
             'error': 'No authorization code is received.'
         }), 500
 
-    r = requests.post(TOKEN_PATH, data={
+    r = requests.post(app.config['TOKEN_PATH_URL'], data={
         "grant_type": "authorization_code",
         "code": authorization_code,
         "client_id": CLIENT_ID,
@@ -152,7 +152,8 @@ def callback():
     try:
         (header, claims) = utils.extractJWT( id_token )
     except Exception as e:
-        flash( "Error: " + str(e) )
+        print( f"Error - " + str(e) )
+        flash( f"Error - " + str(e) )
         return redirect(url_for('client.logout'))
 
     # Ensure that the nonce value is the same (if originally set)

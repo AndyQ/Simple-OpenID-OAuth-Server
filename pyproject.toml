@@ -1,0 +1,11 @@
+[project]
+name = "oauthserver"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "cryptography>=45.0.3",
+    "flask>=3.1.1",
+    "jwcrypto>=1.5.6",
+    "pyopenssl>=25.1.0",
+    "requests>=2.32.3",
+]

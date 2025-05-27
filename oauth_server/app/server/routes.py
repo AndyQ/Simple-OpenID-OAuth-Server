@@ -1,3 +1,5 @@
+import json
+import logging
 import urllib.parse as urlparse
 from flask import Flask, redirect, render_template, request, jsonify, flash
 from urllib.parse import urlencode
@@ -6,7 +8,7 @@ from app import app
 from app import user_management
 from app import openid_management
 from . import server
-
+import config
 from .auth import (authenticate_client,
                   generate_access_and_refresh_tokens,
                   generate_jwt_token,
@@ -16,10 +18,38 @@ from .auth import (authenticate_client,
                   save_tokens, 
                   revokeToken, decode_auth_header, renewAccessToken,
                   get_details_for_access_token, getJWK, 
-                  JWT_LIFE_SPAN)
+                  JWT_LIFE_SPAN,
+                  ISSUER)
 
 from .users import authenticate_user_credentials
 
+
+@app.route('/.well-known/openid-configuration')
+def get_openid_config():
+    logging.info("Returning OIDC config for {config.hostname}")
+    resp = {
+            'issuer': ISSUER, #config.hostname,
+            'authorization_endpoint': f'{config.hostname}/auth',
+            'token_endpoint': f'{config.hostname}/token',
+            'userinfo_endpoint': f'{config.hostname}/user-info',
+            'end_session_endpoint': f'{config.hostname}/logout',
+            'jwks_uri': f'{config.hostname}/certs'
+        }
+    return jsonify( resp )
+
+
+
+@app.route('/certs')
+def get_jwk():
+    logging.info("Returning encryption info")
+    jwk_data = json.loads(config.jwk.export_public())
+    jwk_data['alg'] = 'RS256'
+    jwk_keys = {
+        'keys': [
+            jwk_data
+        ]
+    }
+    return jsonify(jwk_keys)
 
 
 @server.route('/auth')
@@ -35,7 +65,7 @@ def auth():
         flash("Missing client_id or redirect_url")
         return jsonify({
             "error": "invalid_request - missing client_id or redirect_url"
-        }), 400
+        }), 4002
 
     if not verify_client_info(client_id):
         flash("Invalid client_id")
@@ -220,6 +250,28 @@ def introspect():
 def certs():
     jwk = getJWK()
     return jsonify(jwk)
+
+@server.route('/user-info', methods=['GET'])
+def userInfo():
+    auth_header = request.headers.get('Authorization')
+    if 'Bearer' not in auth_header:
+        return jsonify({
+        'error': 'Access token does not exist.'
+        }), 401
+
+    token = auth_header[7:]
+
+    tokenDetails = get_details_for_access_token( token )
+    if tokenDetails == None:
+        return jsonify({
+            "error": "invalid_request"
+        }), 400
+
+    user_id = tokenDetails["user_id"]
+    user = user_management.getUser(user_id)
+    user['roles'] = user.get("permissions", {}).get(tokenDetails['client_id'], [])
+
+    return jsonify(user)
 
 
 if __name__ == '__main__':

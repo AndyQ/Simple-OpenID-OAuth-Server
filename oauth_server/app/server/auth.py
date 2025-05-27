@@ -1,12 +1,13 @@
 from base64 import b64decode, b64encode
 import json
 import os
-import jwt
+from jwcrypto import jwt
 import uuid
 import time
 import struct
 import hashlib
 import base64
+import logging
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
@@ -15,13 +16,13 @@ from cryptography.hazmat.primitives import serialization
 from app import app
 from app import app_management
 from app import openid_management
-
+import config
 
 # KEY = Fernet.generate_key()
 KEY = b'YHD1m3rq3K-x6RxT1MtuGzvyLz4EWIJAEkRtBRycDHA='
 
 ISSUER = 'sample-auth-server'
-AUDIENCE = "iagstore"
+AUDIENCE = "sample-client-id"
 
 CODE_LIFE_SPAN = 600
 JWT_LIFE_SPAN = 1800  # 30 mins
@@ -128,7 +129,7 @@ def generate_jwt_token(client_id, user, scopes, nonce):
     openIDConfig = openid_management.loadConfig()
 
     # standard claims
-    payload = {
+    claims = {
         "iss": ISSUER,
         "exp": time.time() + JWT_LIFE_SPAN,
         "aud": client_id,
@@ -137,30 +138,39 @@ def generate_jwt_token(client_id, user, scopes, nonce):
     }
 
     if  nonce != "":
-        payload["nonce"] = nonce
+        claims["nonce"] = nonce
 
     for claim in openIDConfig["claims"]:
         claimName = claim
         # handle special cases first
         if claimName == "name":
-            payload[claimName] = user["given_name"] + " " + user["family_name"]
+            claims[claimName] = user["given_name"] + " " + user["family_name"]
         elif claimName == "email_verified":
-            payload[claimName] = False
+            claims[claimName] = False
         elif claimName == "phone_number_verified":
-            payload[claimName] = False
+            claims[claimName] = False
         elif claimName == "updated_at":
-            payload[claimName] = user["name"]
+            claims[claimName] = user["name"]
         else:
             if user.get( claimName, "" ) != "":
-                payload[claimName] = user[claimName]
+                claims[claimName] = user[claimName]
 
     if openIDConfig["includeRoles"] and openIDConfig.get("roleClaimName", "") != "":
-        payload[openIDConfig["roleClaimName"]] = user.get("permissions", {}).get(client_id, [])
+        claims[openIDConfig["roleClaimName"]] = user.get("permissions", {}).get(client_id, [])
 
-    access_token = jwt.encode(payload, private_key, algorithm='RS256', headers={
-                              'kid': getPublicKeyKID()})
+    id_token = jwt.JWT(
+        claims=claims,
+        header={
+            'kid': json.loads(config.jwk.export_public())['kid'],
+            'alg': 'RS256'
+        }
+    )
+    id_token.make_signed_token(key=config.jwk)
 
-    return access_token
+    # token = jwt.JWT( header={"alg": "RS256", "kid": getPublicKeyKID()}, claims=claims)
+    # jwt.make_signed_token( serialization.load_pem_private_key(private_key, password=None, backend=default_backend()) )
+
+    return id_token.serialize()
 
 
 def generate_authorization_code(client_id, username, redirect_url, scope, nonce):
@@ -232,7 +242,7 @@ def save_tokens(user_id, client_id, scope, access_token, refresh_token):
 
 def revokeToken(access_token):
     for t in access_tokens:
-        if t["access_token"] == token:
+        if t["access_token"] == access_token:
             access_tokens.remove(t)
             return True
     return False

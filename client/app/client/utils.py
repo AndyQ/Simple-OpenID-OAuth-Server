@@ -1,23 +1,27 @@
-import jwt
+from jwcrypto import jwt, jwk
 import os
+import requests
+import json
 
 from app import app
-
-public_key_pem = os.path.join(app.instance_path, 'public.pem')
-with open(public_key_pem, 'rb') as file:
-    public_key = file.read()
 
 ISSUER = 'sample-auth-server'
 AUDIENCE = "sample-client-id"
 
 def extractJWT( token ):
 
-    claims = jwt.decode(token, public_key,
-                            issuer = ISSUER,
-                            audience = AUDIENCE,
-                            algorithms = ['RS256'])
+    # Grab certs from oauth server
+    resp = requests.get( app.config['JWKS_CERTS_URL'] )
+    jsonResp = resp.json()
 
-    header = jwt.get_unverified_header(token)
+    str = jsonResp['keys'][0]
+
+    key = jwk.JWK(**str)
+
+    ET = jwt.JWT(key=key, jwt=token)
+    claims = json.loads(ET.claims)
+
+    header = ET.header
 
     return ( header, claims )
 
